@@ -30,8 +30,16 @@ export function Hero() {
       ensureGsap();
       const reduce = prefersReducedMotion();
       const intro = ref.current!.querySelector("[data-intro]");
-      if (reduce) {
+      const staticHero =
+        reduce || window.matchMedia("(max-width: 767px)").matches;
+      if (staticHero) {
         gsap.set(intro, { autoAlpha: 0, display: "none" });
+        gsap.set(
+          "[data-hero-eyebrow], [data-hero-title], [data-hero-sub], [data-hero-cta] > *, [data-hero-deco]",
+          { clearProps: "opacity,visibility,transform" },
+        );
+        gsap.set("[data-hero-media]", { clearProps: "clipPath" });
+        gsap.set("[data-hero-media] img", { clearProps: "transform" });
         return;
       }
       let split: SplitText | undefined;
@@ -41,7 +49,18 @@ export function Hero() {
           mask: "lines",
           linesClass: "hero-line",
         });
-        const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+        const tl = gsap.timeline({
+          defaults: { ease: "power4.out" },
+          onComplete: () => {
+            gsap.set(
+              "[data-hero-eyebrow], [data-hero-sub], [data-hero-cta] > *, [data-hero-deco]",
+              { clearProps: "opacity,visibility,transform" },
+            );
+            if (split?.lines) {
+              gsap.set(split.lines, { clearProps: "transform" });
+            }
+          },
+        });
         tl.to("[data-intro-word]", {
           yPercent: -110,
           duration: 0.6,

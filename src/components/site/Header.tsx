@@ -33,14 +33,27 @@ export function Header({ animateIn = false }: { animateIn?: boolean }) {
   useGSAP(
     () => {
       ensureGsap();
-      if (animateIn && !prefersReducedMotion()) {
-        gsap.from(headerRef.current, {
-          yPercent: -110,
-          autoAlpha: 0,
-          duration: 0.9,
-          ease: "power3.out",
-          delay: 0.75,
-        });
+      if (
+        animateIn &&
+        !prefersReducedMotion() &&
+        window.matchMedia("(min-width: 1024px)").matches
+      ) {
+        gsap.fromTo(
+          headerRef.current,
+          { yPercent: -110, autoAlpha: 0 },
+          {
+            yPercent: 0,
+            autoAlpha: 1,
+            duration: 0.9,
+            ease: "power3.out",
+            delay: 0.75,
+            onComplete: () => {
+              gsap.set(headerRef.current, {
+                clearProps: "transform,opacity,visibility",
+              });
+            },
+          },
+        );
       }
       tl.current = gsap
         .timeline({ paused: true })
