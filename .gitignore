@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+.env*
+!.env.example
+*.log
+yarn-debug.log*
+yarn-error.log*
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
