@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { galleryQuery } from "@/lib/data";
+import { mockGallery } from "@/lib/data";
 import { media } from "@/lib/media";
 import { ensureGsap, gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { RevealHeading } from "./Reveal";
@@ -19,7 +18,7 @@ const spans = [
 export function Gallery() {
   const ref = useRef<HTMLElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const { data: images = [] } = useQuery(galleryQuery);
+  const images = mockGallery;
   const [active, setActive] = useState<number | null>(null);
 
   useGSAP(

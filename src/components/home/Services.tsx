@@ -1,8 +1,7 @@
 import { useRef } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Clock } from "lucide-react";
-import { servicesQuery } from "@/lib/data";
+import { mockServices } from "@/lib/data";
 import { media } from "@/lib/media";
 import { formatDuration, formatTRY } from "@/lib/format";
 import { ensureGsap, gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
@@ -11,7 +10,7 @@ import { RevealHeading } from "./Reveal";
 export function Services() {
   const ref = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const { data: services = [] } = useQuery(servicesQuery);
+  const services = mockServices;
 
   useGSAP(
     () => {

@@ -1,10 +1,9 @@
 import { useRef } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowDownRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImgData from "@/assets/hero.jpg";
-import { heroContentQuery } from "@/lib/data";
+import { mockHeroContent } from "@/lib/data";
 import {
   ensureGsap,
   gsap,
@@ -24,8 +23,7 @@ const fallback = {
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
-  const { data } = useQuery(heroContentQuery);
-  const c = { ...fallback, ...(data ?? {}) };
+  const c = { ...fallback, ...mockHeroContent };
 
   useGSAP(
     () => {

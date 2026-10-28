@@ -24,4 +24,4 @@ yarn start
 - React
 - TypeScript
 - Tailwind CSS
-- Supabase
+- Yerel mock veriler

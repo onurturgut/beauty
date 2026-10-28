@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Check,
@@ -13,14 +12,13 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/site/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { servicesQuery, staffQuery, settingsQuery } from "@/lib/data";
+import { mockServices, mockSettings, mockStaff } from "@/lib/data";
 import { media } from "@/lib/media";
 import {
   formatDateTR,
@@ -28,7 +26,6 @@ import {
   formatTRY,
   formatTimeTR,
   istanbulDateKey,
-  mapBookingError,
 } from "@/lib/format";
 import { ensureGsap, gsap, prefersReducedMotion } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
@@ -47,10 +44,9 @@ export function BookingPage() {
     hizmet: params.get("hizmet") ?? undefined,
     uzman: params.get("uzman") ?? undefined,
   };
-  const qc = useQueryClient();
-  const { data: services = [] } = useQuery(servicesQuery);
-  const { data: staff = [] } = useQuery(staffQuery);
-  const { data: settings } = useQuery(settingsQuery);
+  const services = mockServices;
+  const staff = mockStaff;
+  const settings = mockSettings;
 
   const [step, setStep] = useState(0);
   const [serviceId, setServiceId] = useState<string | null>(
@@ -111,62 +107,65 @@ export function BookingPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const weekdays = useQuery({
-    queryKey: ["open-weekdays", serviceId, staffId],
-    enabled: !!serviceId,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_open_weekdays", {
-        _service: serviceId!,
-        _staff: staffId ?? undefined,
-      } as never);
-      if (error) throw error;
-      return (data ?? []) as number[];
-    },
-  });
+  const weekdays = {
+    data: [0, 2, 3, 4, 5, 6],
+    isLoading: false,
+    isError: false,
+    refetch: () => undefined,
+  };
 
-  const slots = useQuery({
-    queryKey: ["availability", serviceId, staffId, day],
-    enabled: !!serviceId && !!day,
-    refetchInterval: 30_000,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_availability", {
-        _service: serviceId!,
-        _staff: staffId ?? undefined,
-        _day: day!,
-      } as never);
-      if (error) throw error;
-      return (data ?? []) as Slot[];
-    },
-  });
+  const slotData = useMemo(() => {
+    if (!service || !day) return [];
+
+    const selectedStaffId = staffId ?? eligibleStaff[0]?.id ?? null;
+    if (!selectedStaffId) return [];
+
+    const generated: Slot[] = [];
+    const startMinutes = 10 * 60;
+    const endMinutes = 20 * 60;
+    const breakStart = 13 * 60 + 30;
+    const breakEnd = 14 * 60 + 30;
+
+    for (
+      let minute = startMinutes;
+      minute + service.duration_min <= endMinutes;
+      minute += 30
+    ) {
+      const appointmentEnd = minute + service.duration_min;
+      const overlapsBreak = minute < breakEnd && appointmentEnd > breakStart;
+      if (overlapsBreak) continue;
+
+      const hour = String(Math.floor(minute / 60)).padStart(2, "0");
+      const minutes = String(minute % 60).padStart(2, "0");
+      const label = `${hour}:${minutes}`;
+      const startsAt = new Date(`${day}T${label}:00+03:00`);
+
+      if (startsAt.getTime() < Date.now() + 2 * 60 * 60 * 1000) continue;
+
+      generated.push({
+        slot: label,
+        starts_at: startsAt.toISOString(),
+        available: true,
+        staff_id: selectedStaffId,
+      });
+    }
+
+    return generated;
+  }, [day, eligibleStaff, service, staffId]);
+
+  const slots = { data: slotData, isLoading: false };
 
   const submit = async () => {
     if (!service || !slot) return;
     setSubmitting(true);
     setError(null);
-    const { data, error } = await supabase.rpc("create_booking", {
-      _service: service.id,
-      _staff: staffId ?? undefined,
-      _starts_at: slot.starts_at,
-      _first: form.first,
-      _last: form.last,
-      _phone: form.phone,
-      _email: form.email,
-      _note: form.note,
-      _marketing: form.marketing,
-      _kvkk: form.kvkk,
-    } as never);
+    await new Promise((resolve) => setTimeout(resolve, 600));
     setSubmitting(false);
-    if (error || !data?.[0]) {
-      const msg = mapBookingError(error?.message ?? "");
-      setError(msg ?? "Randevu oluşturulamadı. Lütfen tekrar deneyin.");
-      if (error?.message.includes("SLOT_TAKEN")) {
-        setSlot(null);
-        qc.invalidateQueries({ queryKey: ["availability"] });
-        setTimeout(() => go(3), 1600);
-      }
-      return;
-    }
-    setResult(data[0]);
+    setResult({
+      reference: `DEMO-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+      staff_name: chosenStaff?.full_name ?? "Müsait uzman",
+      starts_at: slot.starts_at,
+    });
   };
 
   if (result && service)
@@ -365,17 +364,43 @@ export function BookingPage() {
               )}
 
               {step === 2 && (
-                <MonthCalendar
-                  openWeekdays={weekdays.data ?? []}
-                  closed={settings?.closed_dates ?? []}
-                  maxDays={settings?.max_advance_days ?? 60}
-                  value={day}
-                  onChange={(d) => {
-                    setDay(d);
-                    setSlot(null);
-                    go(3);
-                  }}
-                />
+                <>
+                  {weekdays.isLoading ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Takvim
+                      hazırlanıyor…
+                    </div>
+                  ) : weekdays.isError ? (
+                    <div
+                      role="alert"
+                      className="border-l-2 border-destructive pl-4"
+                    >
+                      <p className="text-sm text-destructive">
+                        Takvim şu anda yüklenemedi. Lütfen tekrar deneyin.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="luxOutline"
+                        className="mt-4"
+                        onClick={() => weekdays.refetch()}
+                      >
+                        Tekrar Dene
+                      </Button>
+                    </div>
+                  ) : (
+                    <MonthCalendar
+                      openWeekdays={weekdays.data ?? []}
+                      closed={settings?.closed_dates ?? []}
+                      maxDays={settings?.max_advance_days ?? 60}
+                      value={day}
+                      onChange={(d) => {
+                        setDay(d);
+                        setSlot(null);
+                        go(3);
+                      }}
+                    />
+                  )}
+                </>
               )}
 
               {step === 3 && (
@@ -605,7 +630,7 @@ export function BookingPage() {
                         <Loader2 className="animate-spin" /> Kontrol ediliyor…
                       </>
                     ) : (
-                      "Randevuyu Onayla"
+                      "Demo Randevuyu Onayla"
                     )}
                   </Button>
                 </div>
@@ -793,7 +818,7 @@ function Success({
             <Check className="h-9 w-9" />
           </div>
           <h1 data-ok-item className="display-section mt-8 text-espresso">
-            Randevunuz oluşturuldu.
+            Demo randevunuz oluşturuldu.
           </h1>
           <p data-ok-item className="mt-6 text-muted-foreground">
             {serviceName} · {result.staff_name}
@@ -810,8 +835,8 @@ function Success({
             {result.reference}
           </p>
           <p data-ok-item className="mt-6 text-sm text-muted-foreground">
-            Randevunuz salon tarafından onaylandığında sizinle iletişime
-            geçeceğiz. Değişiklik için bizi arayabilirsiniz.
+            Bu işlem yalnızca tanıtım amaçlıdır; gerçek bir randevu kaydı
+            oluşturulmamıştır.
           </p>
           <div data-ok-item className="mt-10">
             <Button asChild variant="luxOutline" size="xl">

@@ -1,15 +1,14 @@
 import { useRef } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { staffQuery, servicesQuery } from "@/lib/data";
+import { mockServices, mockStaff } from "@/lib/data";
 import { media } from "@/lib/media";
 import { ensureGsap, gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { RevealHeading } from "./Reveal";
 
 export function Team() {
   const ref = useRef<HTMLElement>(null);
-  const { data: staff = [] } = useQuery(staffQuery);
-  const { data: services = [] } = useQuery(servicesQuery);
+  const staff = mockStaff;
+  const services = mockServices;
 
   useGSAP(
     () => {

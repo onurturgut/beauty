@@ -1,14 +1,23 @@
 "use client";
 
 import { useRef } from "react";
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { Instagram, MessageCircle, Phone, MapPin, Clock } from "lucide-react";
-import { settingsQuery } from "@/lib/data";
+import { ExternalLink, Instagram } from "lucide-react";
 import { ensureGsap, gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 
+const socialLinks = [
+  {
+    label: "Web sitesi",
+    href: "https://www.onurturgut.com/",
+    icon: ExternalLink,
+  },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/aisurix.web/",
+    icon: Instagram,
+  },
+];
+
 export function Footer() {
-  const { data: s } = useQuery(settingsQuery);
   const ref = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -38,84 +47,43 @@ export function Footer() {
             className="flex justify-between font-display text-[22vw] leading-[0.8] tracking-tight text-cream/95 lg:text-[18rem]"
             aria-hidden
           >
-            {"LUMÉ".split("").map((c, i) => (
-              <span key={i} data-ft-letter className="inline-block">
-                {c}
+            {"LUMÉ".split("").map((character, index) => (
+              <span key={index} data-ft-letter className="inline-block">
+                {character}
               </span>
             ))}
           </div>
         </div>
-        <div className="mt-14 grid gap-12 border-t border-cream/15 pt-12 md:grid-cols-12">
-          <p className="max-w-sm text-sm leading-relaxed text-cream/70 md:col-span-4">
-            Nişantaşı'nda, güzelliğe yavaşlayarak ve özenle dokunan bir bakım
-            stüdyosu.
-          </p>
-          <div className="space-y-4 text-sm md:col-span-4">
-            {s?.phone && (
-              <a
-                href={`tel:${s.phone.replace(/\s/g, "")}`}
-                className="flex items-center gap-3 hover:text-blush"
-              >
-                <Phone className="h-4 w-4" />
-                {s.phone}
-              </a>
-            )}
-            {s?.whatsapp && (
-              <a
-                href={`https://wa.me/${s.whatsapp}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 hover:text-blush"
-              >
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp
-              </a>
-            )}
-            {s?.instagram && (
-              <a
-                href={`https://instagram.com/${s.instagram}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 hover:text-blush"
-              >
-                <Instagram className="h-4 w-4" />@{s.instagram}
-              </a>
-            )}
+
+        <div className="mt-14 flex flex-col gap-8 border-t border-cream/15 pt-10 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-display text-3xl text-cream">
+              Bu bir demo web sitesidir.
+            </p>
+            <p className="mt-2 text-sm text-cream/60">
+              Gerçek bir işletmeyi veya hizmeti temsil etmez.
+            </p>
           </div>
-          <div className="space-y-4 text-sm md:col-span-4">
-            {s?.address && (
+
+          <div className="flex flex-wrap gap-3">
+            {socialLinks.map(({ label, href, icon: Icon }) => (
               <a
-                href={s.maps_url ?? "#"}
+                key={label}
+                href={href}
                 target="_blank"
-                rel="noreferrer"
-                className="flex items-start gap-3 hover:text-blush"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-12 items-center gap-2 border border-cream/25 px-5 text-sm text-cream transition-colors hover:border-blush hover:text-blush"
               >
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                {s.address}
+                <Icon className="h-4 w-4" aria-hidden />
+                {label}
               </a>
-            )}
-            {s?.hours_text && (
-              <p className="flex items-start gap-3 text-cream/80">
-                <Clock className="mt-0.5 h-4 w-4 shrink-0" />
-                {s.hours_text}
-              </p>
-            )}
+            ))}
           </div>
         </div>
-        <div className="mt-14 flex flex-wrap items-center justify-between gap-4 text-xs text-cream/50">
-          <span>© {new Date().getFullYear()} LUMÉ Beauty Studio</span>
-          <div className="flex gap-6">
-            <Link href="/kvkk" className="hover:text-cream">
-              KVKK & Gizlilik
-            </Link>
-            <Link href="/randevu" className="hover:text-cream">
-              Randevu
-            </Link>
-            <Link href="/admin" className="hover:text-cream">
-              Yönetim
-            </Link>
-          </div>
-        </div>
+
+        <p className="mt-10 text-xs text-cream/45">
+          © {new Date().getFullYear()} LUMÉ Beauty Studio — Demo proje
+        </p>
       </div>
     </footer>
   );

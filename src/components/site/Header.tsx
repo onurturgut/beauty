@@ -102,7 +102,7 @@ export function Header({ animateIn = false }: { animateIn?: boolean }) {
             {links.map((l) => (
               <Link
                 key={l.label}
-                href={`/${l.hash ?? ""}`}
+                href={l.hash ? `/#${l.hash}` : "/"}
                 className="group relative text-[0.82rem] tracking-wide text-espresso/80 transition-colors hover:text-espresso"
               >
                 {l.label}
@@ -142,7 +142,7 @@ export function Header({ animateIn = false }: { animateIn?: boolean }) {
             <span key={l.label} className="mask-line">
               <Link
                 data-mlink
-                href={`/${l.hash ?? ""}`}
+                href={l.hash ? `/#${l.hash}` : "/"}
                 onClick={() => setOpen(false)}
                 className="flex items-baseline gap-4 py-1 font-display text-5xl text-espresso"
               >
